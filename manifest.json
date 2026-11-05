@@ -1,0 +1,91 @@
+{
+  "background_color": "#ffffff",
+  "description": "Drop a folder or zip. See your site live on Cloudflare's global network in seconds.",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "HFMKCALL",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "Cloudflare Drop",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "https://www.cloudflare.com/_summon/favicon.ico",
+      "type": "image/x-icon",
+      "isSquare": false,
+      "isPng": false,
+      "isWebp": false,
+      "isJpg": false,
+      "width": 0,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
+    },
+    {
+      "src": "https://www.cloudflare.com/_summon/favicon.svg",
+      "type": "image/svg+xml",
+      "isSquare": false,
+      "isPng": false,
+      "isWebp": false,
+      "isJpg": false,
+      "width": 0,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
+    },
+    {
+      "src": "https://www.cloudflare.com/_summon/favicon-32x32.png",
+      "type": "image/png",
+      "sizes": "32x32",
+      "isSquare": true,
+      "isPng": true,
+      "isWebp": false,
+      "isJpg": false,
+      "width": 32,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
+    },
+    {
+      "src": "https://www.cloudflare.com/_summon/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "152x152",
+      "isSquare": true,
+      "isPng": true,
+      "isWebp": false,
+      "isJpg": false,
+      "width": 152,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
+    },
+    {
+      "src": "https://www.cloudflare.com/_summon/og-image.png",
+      "type": "image/png",
+      "sizes": "1200x630",
+      "isSquare": false,
+      "isPng": true,
+      "isWebp": false,
+      "isJpg": false,
+      "width": 1200,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
+    },
+    {
+      "src": "https://www.cloudflare.com/favicon.ico",
+      "type": "image/x-icon",
+      "sizes": "99x96",
+      "isSquare": false,
+      "isPng": false,
+      "isWebp": false,
+      "isJpg": false,
+      "width": 99,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
+    }
+  ],
+  "id": "HFMKCALL"
+}
