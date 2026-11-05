@@ -70,24 +70,24 @@ nav button.on{color:var(--acc);box-shadow:inset 0 2px 0 var(--acc)}
 <input type="file" id="photo" accept="image/*" capture="environment" hidden>
 
 <script>
-  /* ===== PWA: manifest с жестким URL ===== */
-  (function () {
-    const icon = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#111214"/><circle cx="256" cy="256" r="150" fill="none" stroke="#7fd6a0" stroke-width="40"/></svg>');
-    const m = { 
-      name: 'Калории', 
-      short_name: 'Калории', 
-      start_url: "https://lactulosa.github.io/kcal-apk/", 
-      scope: "https://lactulosa.github.io/kcal-apk/",
-      display: 'standalone', 
-      background_color: '#111214', 
-      theme_color: '#111214', 
-      icons: [{ src: icon, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }] 
-    };
-    const l = document.createElement('link');
-    l.rel = 'manifest';
-    l.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(m));
-    document.head.append(l);
-  })();
+/* ===== PWA: manifest через data URI (ИСПРАВЛЕНО) ===== */
+(function () {
+  const icon = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#111214"/><circle cx="256" cy="256" r="150" fill="none" stroke="#7fd6a0" stroke-width="40"/></svg>');
+  const m = { 
+    name: 'Калории', 
+    short_name: 'Калории', 
+    start_url: "./", 
+    scope: "./",
+    display: 'standalone', 
+    background_color: '#111214', 
+    theme_color: '#111214', 
+    icons: [{ src: icon, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }] 
+  };
+  const l = document.createElement('link');
+  l.rel = 'manifest';
+  l.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(m));
+  document.head.append(l);
+})();
 (function () {
 'use strict';
 
