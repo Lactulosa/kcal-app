@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<link rel="manifest" href="manifest.json" />
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#111214">
@@ -70,24 +69,6 @@ nav button.on{color:var(--acc);box-shadow:inset 0 2px 0 var(--acc)}
 <input type="file" id="photo" accept="image/*" capture="environment" hidden>
 
 <script>
-/* ===== PWA: manifest через data URI (ИСПРАВЛЕНО) ===== */
-(function () {
-  const icon = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#111214"/><circle cx="256" cy="256" r="150" fill="none" stroke="#7fd6a0" stroke-width="40"/></svg>');
-  const m = { 
-    name: 'Калории', 
-    short_name: 'Калории', 
-    start_url: "./", 
-    scope: "./",
-    display: 'standalone', 
-    background_color: '#111214', 
-    theme_color: '#111214', 
-    icons: [{ src: icon, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }] 
-  };
-  const l = document.createElement('link');
-  l.rel = 'manifest';
-  l.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(m));
-  document.head.append(l);
-})();
 (function () {
 'use strict';
 
@@ -341,18 +322,19 @@ async function onCode(code) {
   }
 }
 
-/* ===== Gemini ===== */
-const PROMPT_TAIL = 'Верни СТРОГО JSON без markdown: {dish_name, estimated_weight_g, calories, protein, fat, carbs, confidence}';
+/* ===== Gemini (через шлюз ProxyAPI) ===== */
+// Требуемый формат ответа: только название и КБЖУ на 100 г, вес вводит пользователь
+const PROMPT_TAIL = 'Верни СТРОГО JSON без markdown: {"dish_name": "название блюда", "calories_per_100g": число, "protein_per_100g": число, "fat_per_100g": число, "carbs_per_100g": число, "confidence": "high/medium/low"}';
 async function gemini(parts) {
   const key = store.get('gemini_key', '');
-  if (!key) throw new Error('Нужен Gemini API-ключ. Добавьте его в настройках');
+  if (!key) throw new Error('Нужен API-ключ. Добавьте его в настройках');
   const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 30000);
   try {
-    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(key), {
+    const r = await fetch('https://api.proxyapi.ru/google/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(key), {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctl.signal,
       body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseMimeType: 'application/json' } })
     });
-    if (!r.ok) throw new Error(r.status === 400 || r.status === 403 ? 'Ключ не принят сервисом' : 'Сервис вернул ошибку ' + r.status);
+    if (!r.ok) throw new Error(r.status === 400 || r.status === 401 || r.status === 403 ? 'Ключ не принят сервисом' : 'Сервис вернул ошибку ' + r.status);
     const j = await r.json();
     const txt = (((j.candidates || [])[0] || {}).content || {}).parts;
     if (!txt || !txt[0] || !txt[0].text) throw new Error('Пустой ответ сервиса');
@@ -360,10 +342,19 @@ async function gemini(parts) {
     const m = txt[0].text.match(/\{[\s\S]*\}/);
     if (!m) throw new Error('Ответ не похож на JSON');
     const o = JSON.parse(m[0]);
-    const w = num(o.estimated_weight_g) || 100;
-    const cal = num(o.calories);
-    if (!cal) throw new Error('В ответе нет калорий');
-    return { name: String(o.dish_name || 'Блюдо'), grams: Math.round(w), per100: { k: cal / w * 100, p: num(o.protein) / w * 100, f: num(o.fat) / w * 100, c: num(o.carbs) / w * 100 }, note: 'Оценка ИИ, уверенность: ' + (o.confidence == null ? 'н/д' : o.confidence) };
+    // Значения уже на 100 г, пересчёт по весу не нужен
+    if (!num(o.calories_per_100g)) throw new Error('В ответе нет калорийности');
+    return {
+      name: String(o.dish_name || 'Блюдо'),
+      grams: 100, // дефолтный вес для шторки, пользователь сам поменяет
+      per100: {
+        k: num(o.calories_per_100g),
+        p: num(o.protein_per_100g),
+        f: num(o.fat_per_100g),
+        c: num(o.carbs_per_100g)
+      },
+      note: 'Оценка ИИ (на 100 г), уверенность: ' + (o.confidence || 'н/д')
+    };
   } catch (e) {
     if (e.name === 'AbortError') throw new Error('Сервис не отвечает');
     if (e instanceof SyntaxError) throw new Error('Ответ не удалось разобрать');
@@ -399,7 +390,7 @@ $('#photo').addEventListener('change', async ev => {
   busy('Анализ фото...');
   try {
     const b64 = await shrink(file);
-    openSheet(await gemini([{ inline_data: { mime_type: 'image/jpeg', data: b64 } }, { text: 'Оцени блюдо на фото. ' + PROMPT_TAIL }]));
+    openSheet(await gemini([{ inline_data: { mime_type: 'image/jpeg', data: b64 } }, { text: 'Определи блюдо на фото и дай его КБЖУ на 100 грамм. ' + PROMPT_TAIL }]));
   } catch (e) { aiFail(e); }
 });
 
@@ -411,7 +402,7 @@ function textSheet() {
       const t = ta.value.trim();
       if (!t) { toast('Опишите, что вы съели', 1); return; }
       busy('Оценка...');
-      try { openSheet(await gemini([{ text: 'Оцени КБЖУ для: ' + t + '. ' + PROMPT_TAIL }])); }
+      try { openSheet(await gemini([{ text: 'Определи блюдо по описанию: ' + t + '. Дай его КБЖУ на 100 грамм. ' + PROMPT_TAIL }])); }
       catch (e) { aiFail(e, t.slice(0, 60)); }
     } }, 'Оценить'),
     h('button', { class: 'btn', onclick: closeSheet }, 'Отмена'));
